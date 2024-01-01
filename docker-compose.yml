@@ -1,0 +1,21 @@
+version: "3.3"
+services:
+  db:
+    image: mysql:latest
+    container_name: godockerDB
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_PASSWORD: pass
+      MYSQL_DATABASE: db
+    ports:
+      - "3306:3306"
+
+  pg:
+    image: postgres:latest
+    container_name: godockerPG
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
