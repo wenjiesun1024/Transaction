@@ -1,20 +1,22 @@
 package main
 
 import (
+
+	// pg "SQLIsolationLevelTest/Pg"
+
 	mysql "SQLIsolationLevelTest/Mysql"
-	pg "SQLIsolationLevelTest/Pg"
 
 	_ "github.com/lib/pq"
 )
 
 func main() {
 	{
-		mysql.MysqlCurrentReadAndSnapRead()
-		// MysqlDeadLock()
-		// MysqlSlowSQL()
+		// mysql.MysqlCurrentReadAndSnapRead()
+		// mysql.MysqlDeadLock()
+		mysql.MysqlSlowSQL()
 	}
 	{
-		pg.PostgresSQL()
+		// pg.PostgresSQL()
 	}
 }
 

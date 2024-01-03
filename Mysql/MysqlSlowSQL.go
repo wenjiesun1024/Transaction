@@ -2,40 +2,91 @@ package mysql
 
 import (
 	"SQLIsolationLevelTest/common"
+	"SQLIsolationLevelTest/model"
 	"sync"
 	"time"
 
 	"gorm.io/gorm/clause"
 )
 
-func MysqlSlowSQL() {
+func MysqlLock() {
 	gormDB := common.InitMysql()
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
-		tx := gormDB.Begin()
-		defer tx.Commit()
 		defer wg.Done()
 
-		// 在 RR，for update 会锁住所有读过的行，所以这里会锁住所有的行， 同时所有区间上的间隙也会被锁住
-		// 另外一个transaction 已经锁住所有的行，所以 这个transaction 会被阻塞直到另外一个transaction commit
-		common.PrintlnAllUsers(tx, "1", clause.Locking{Strength: "UPDATE"})
+		tx := gormDB.Begin()
+		defer tx.Commit()
+
+		tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", 7).First(&model.T{}) // 间隙锁(5, 10)
+		common.PrintlnAllData(tx, "1")
+
 		time.Sleep(10 * time.Second)
 	}()
 
 	go func() {
-		time.Sleep(2 * time.Second)
-
-		tx := gormDB.Begin()
-		defer tx.Commit()
 		defer wg.Done()
 
-		common.PrintlnAllUsers(tx, "2", clause.Locking{Strength: "UPDATE"})
+		time.Sleep(2 * time.Second)
+		gormDB.Create(&model.T{ID: 8, C: 8, D: 8}) // block
+		common.PrintlnAllData(gormDB, "2")
+
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		time.Sleep(3 * time.Second)
+		gormDB.Model(&model.T{}).Where("id = ?", 10).Update("d", 888) // not block
+		common.PrintlnAllData(gormDB, "3")
 	}()
 
 	wg.Wait()
 
-	common.PrintlnAllUsers(gormDB, "end")
+	common.PrintlnAllData(gormDB, "end")
+}
+
+func MysqlLock2() {
+	gormDB := common.InitMysql()
+
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+
+		tx := gormDB.Begin()
+		defer tx.Commit()
+
+		tx.Debug().Raw("select id from ts where c = ? lock in share mode", 5).Scan(&model.T{}) // 间隙锁(0, 10), 注意锁的是覆盖索引
+		// tx.Debug().Raw("select id from ts where c = ? for update", 5).Scan(&model.T{}) // 间隙锁(0, 10), 注意会锁住主键索引。所以此时更新也会被阻塞
+		// tx.Debug().Raw("select d from ts where c = ? lock in share mode", 5).Scan(&model.T{}) // 间隙锁(0, 10), 注意覆盖索引中没有 d，所以回表的过程中，主键索引也会被锁住
+		common.PrintlnAllData(tx, "1")
+
+		time.Sleep(6 * time.Second)
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		time.Sleep(2 * time.Second)
+		gormDB.Debug().Model(&model.T{}).Where("id = ?", 5).Update("d", 888) // not block, 因为锁的是覆盖索引
+		common.PrintlnAllData(gormDB, "2")
+
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		time.Sleep(3 * time.Second)
+		gormDB.Debug().Create(&model.T{ID: 7, C: 7, D: 7}) // block
+		common.PrintlnAllData(gormDB, "3")
+	}()
+
+	wg.Wait()
+
+	common.PrintlnAllData(gormDB, "end")
 }

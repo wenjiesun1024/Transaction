@@ -5,6 +5,7 @@ import (
 	"SQLIsolationLevelTest/model"
 	"sync"
 	"time"
+	// "gorm.io/gorm/clause"
 )
 
 func PostgresSQL() {
@@ -15,14 +16,14 @@ func PostgresSQL() {
 
 	go func() {
 		tx := gormDB.Begin()
-		defer tx.Commit()
 		defer wg.Done()
+		defer tx.Commit()
 		// tx.Exec(`set transaction isolation level repeatable read`)
 
 		time.Sleep(2 * time.Second)
 
-		tx.Model(&model.User{}).Where("name = ?", "John").Update("age", 100000)
-		common.PrintlnAllUsers(tx, "2")
+		tx.Model(&model.T{}).Where("name = ?", "John").Update("age", 100000)
+		common.PrintlnAllData(tx, "2")
 
 		// time.Sleep(1 * time.Second)
 		// gormDB.Model(&User{}).Create(&User{Name: "Tom", Age: 44, UserID: 3})
@@ -32,8 +33,8 @@ func PostgresSQL() {
 
 	go func() {
 		tx := gormDB.Begin()
-		defer tx.Commit()
 		defer wg.Done()
+		defer tx.Commit()
 
 		// gormDB.Model(&User{}).Create(&User{Name: "Tom", Age: 55, UserID: 3})
 		// time.Sleep(5 * time.Second)
@@ -41,13 +42,13 @@ func PostgresSQL() {
 		// set transaction isolation level
 		// tx.Exec(`set transaction isolation level repeatable read`)
 
-		common.PrintlnAllUsers(tx, "1")
+		common.PrintlnAllData(tx, "1")
 
-		tx.Model(&model.User{}).Create(&model.User{Name: "Tom", Age: 55, UserID: 3})
+		// tx.Model(&model.User{}).Create(&model.User{Name: "Tom", Age: 55, UserID: 3})
 
 		time.Sleep(4 * time.Second)
 
-		common.PrintlnAllUsers(tx, "3") // John 100000 (snap read)
+		common.PrintlnAllData(tx, "3") // John 100000 (snap read)
 
 		time.Sleep(4 * time.Second)
 		// plus john's age 10
@@ -63,11 +64,11 @@ func PostgresSQL() {
 		// 	fmt.Println(err, "??")
 		// }
 
-		common.PrintlnAllUsers(tx, "4") // Johh 100010 (current read)
+		common.PrintlnAllData(tx, "4") // Johh 100010 (current read)
 
 	}()
 
 	wg.Wait()
 
-	common.PrintlnAllUsers(gormDB, "end")
+	common.PrintlnAllData(gormDB, "end")
 }

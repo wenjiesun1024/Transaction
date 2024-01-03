@@ -20,14 +20,18 @@ func InitMysql() *gorm.DB {
 	}
 
 	// use gorm to create a table
-	gormDB.AutoMigrate(&model.User{})
+	gormDB.AutoMigrate(&model.T{})
 
 	// clear all data
-	gormDB.Unscoped().Where("1 = 1").Delete(&model.User{})
+	gormDB.Unscoped().Where("1 = 1").Delete(&model.T{})
 
 	// insert data
-	gormDB.Create(&model.User{Name: "Bob", Age: 30, UserID: 1})
-	gormDB.Create(&model.User{Name: "John", Age: 40, UserID: 2})
+	gormDB.Create(&model.T{ID: 1, C: 1, D: 1})
+	gormDB.Create(&model.T{ID: 5, C: 5, D: 5})
+	gormDB.Create(&model.T{ID: 10, C: 10, D: 10})
+	gormDB.Create(&model.T{ID: 15, C: 15, D: 15})
+	gormDB.Create(&model.T{ID: 20, C: 20, D: 20})
+	gormDB.Create(&model.T{ID: 25, C: 25, D: 25})
 
 	return gormDB
 }
@@ -46,23 +50,27 @@ func InitPG() *gorm.DB {
 	}
 
 	// use gorm to create a table
-	gormDB.AutoMigrate(&model.User{})
+	gormDB.AutoMigrate(&model.T{})
 
 	// clear all data
-	gormDB.Unscoped().Where("1 = 1").Delete(&model.User{})
+	gormDB.Unscoped().Where("1 = 1").Delete(&model.T{})
 	// insert data
-	gormDB.Create(&model.User{Name: "Bob", Age: 30, UserID: 1})
-	gormDB.Create(&model.User{Name: "John", Age: 40, UserID: 2})
+	gormDB.Create(&model.T{ID: 1, C: 1, D: 1})
+	gormDB.Create(&model.T{ID: 5, C: 5, D: 5})
+	gormDB.Create(&model.T{ID: 10, C: 10, D: 10})
+	gormDB.Create(&model.T{ID: 15, C: 15, D: 15})
+	gormDB.Create(&model.T{ID: 20, C: 20, D: 20})
+	gormDB.Create(&model.T{ID: 25, C: 25, D: 25})
 
 	return gormDB
 }
 
-func PrintlnAllUsers(db *gorm.DB, tag string, Clauses ...clause.Expression) {
-	var users []model.User
-	db.Clauses(Clauses...).Find(&users)
+func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) {
+	var T []model.T
+	db.Clauses(Clauses...).Find(&T)
 	fmt.Println(tag)
-	for _, user := range users {
-		fmt.Println(user.Name, user.Age, user.UserID)
+	for _, i := range T {
+		fmt.Println(i)
 	}
 	fmt.Println("------------------------")
 }
