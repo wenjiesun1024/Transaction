@@ -12,8 +12,8 @@ import (
 func main() {
 	{
 		// mysql.MysqlCurrentReadAndSnapRead()
-		// mysql.MysqlDeadLock()
-		mysql.MysqlSlowSQL()
+		mysql.MysqlDeadLock()
+		// mysql.MysqlLock3()
 	}
 	{
 		// pg.PostgresSQL()

@@ -90,3 +90,50 @@ func MysqlLock2() {
 
 	common.PrintlnAllData(gormDB, "end")
 }
+
+func MysqlLock3() {
+	gormDB := common.InitMysql()
+
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+
+		tx := gormDB.Begin()
+		defer tx.Commit()
+
+		tx.Debug().Raw("select * from ts where id >= 10 and id < 25 for update").Scan(&model.T{}) // [10,15]
+		// tx.Debug().Raw("select * from ts where id = 10 for update").Scan(&model.T{}) // 10
+		common.PrintlnAllData(tx, "1")
+
+		time.Sleep(6 * time.Second)
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		time.Sleep(2 * time.Second)
+		gormDB.Debug().Create(&model.T{ID: 8, C: 8, D: 8})
+		gormDB.Debug().Create(&model.T{ID: 13, C: 13, D: 13})
+
+		common.PrintlnAllData(gormDB, "2")
+
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		time.Sleep(3 * time.Second)
+
+		// update d = d + 1 where id = 10
+		//gormDB.Debug().Model(&model.T{}).Where("id = ?", 15).UpdateColumn("d", gorm.Expr("d + ?", 1))
+		gormDB.Debug().Raw("update ts set d = d + 1 where id = 15").Scan(&model.T{})
+
+		common.PrintlnAllData(gormDB, "3")
+	}()
+
+	wg.Wait()
+
+	common.PrintlnAllData(gormDB, "end")
+}
