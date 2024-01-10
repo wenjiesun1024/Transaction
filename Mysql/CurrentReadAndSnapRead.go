@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"SQLIsolationLevelTest/common"
-	"SQLIsolationLevelTest/model"
+	"Transaction/common"
+	"Transaction/model"
 	"sync"
 	"time"
 

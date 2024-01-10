@@ -1,8 +1,8 @@
 package pg
 
 import (
-	"SQLIsolationLevelTest/common"
-	"SQLIsolationLevelTest/model"
+	"Transaction/common"
+	"Transaction/model"
 	"sync"
 	"time"
 	// "gorm.io/gorm/clause"

@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 
-	"SQLIsolationLevelTest/model"
+	"Transaction/model"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"

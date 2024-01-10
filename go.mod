@@ -1,4 +1,4 @@
-module SQLIsolationLevelTest
+module Transaction
 
 go 1.20
 
