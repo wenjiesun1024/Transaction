@@ -44,7 +44,7 @@ func InitPG() *gorm.DB {
 	}
 
 	// set transaction isolation level
-	err = gormDB.Exec(`set transaction isolation level repeatable read`).Error
+	err = gormDB.Exec("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ").Error
 	if err != nil {
 		panic(err)
 	}

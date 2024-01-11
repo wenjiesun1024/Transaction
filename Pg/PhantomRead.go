@@ -3,9 +3,7 @@ package pg
 import (
 	"Transaction/common"
 	"Transaction/model"
-	"database/sql"
 
-	// "database/sql"
 	"sync"
 	"time"
 )
@@ -19,15 +17,14 @@ func PGPhantomRead() {
 	go func() {
 		defer wg.Done()
 
-		tx := gormDB.Begin(&sql.TxOptions{
-			Isolation: sql.LevelRepeatableRead,
-		})
+		tx := gormDB.Begin()
 		defer tx.Commit()
 
 		common.PrintlnAllData(tx, "1")
 
 		time.Sleep(3 * time.Second)
 
+		common.PrintlnAllData(tx, "1")
 		tx.Model(&model.T{}).Where("1=1").Update("d", 100000)
 
 		common.PrintlnAllData(tx, "2")
@@ -42,6 +39,5 @@ func PGPhantomRead() {
 	}()
 
 	wg.Wait()
-
 	common.PrintlnAllData(gormDB, "end")
 }

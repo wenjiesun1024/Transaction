@@ -137,3 +137,38 @@ func MysqlLock3() {
 
 	common.PrintlnAllData(gormDB, "end")
 }
+
+func MysqlLock4() {
+	gormDB := common.InitMysql()
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		tx := gormDB.Begin()
+		defer tx.Commit()
+
+		common.PrintlnAllData(tx, "1")
+
+		time.Sleep(6 * time.Second)
+
+		common.PrintlnAllData(tx, "1")
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		time.Sleep(2 * time.Second)
+		gormDB.Debug().Create(&model.T{ID: 8, C: 5, D: 8})
+		gormDB.Debug().Create(&model.T{ID: 13, C: 5, D: 13})
+
+		common.PrintlnAllData(gormDB, "2")
+
+	}()
+
+	wg.Wait()
+
+	common.PrintlnAllData(gormDB, "end")
+}

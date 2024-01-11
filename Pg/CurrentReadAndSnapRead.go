@@ -3,7 +3,6 @@ package pg
 import (
 	"Transaction/common"
 	"Transaction/model"
-	"database/sql"
 	"sync"
 	"time"
 
@@ -22,16 +21,14 @@ func PGCurrentReadAndSnapRead() {
 	go func() {
 		defer wg.Done()
 
-		tx := gormDB.Begin(&sql.TxOptions{
-			Isolation: sql.LevelRepeatableRead,
-		})
+		tx := gormDB.Begin()
 		defer tx.Commit()
 
 		common.PrintlnAllData(tx, "1")
 
 		time.Sleep(3 * time.Second)
 
-		// common.PrintlnAllData(tx, "3", clause.Locking{Strength: "UPDATE"}) // abort
+		//common.PrintlnAllData(tx, "3", clause.Locking{Strength: "UPDATE"}) // abort
 		// common.PrintlnAllData(tx, "3", clause.Locking{Strength: "SHARE"}) // abort
 		common.PrintlnAllData(tx, "3") // id=5, c=5, d=5
 
@@ -46,9 +43,7 @@ func PGCurrentReadAndSnapRead() {
 
 		time.Sleep(2 * time.Second)
 
-		tx := gormDB.Begin(&sql.TxOptions{
-			Isolation: sql.LevelRepeatableRead,
-		})
+		tx := gormDB.Begin()
 		defer tx.Commit()
 
 		tx.Model(&model.T{}).Where("id = ?", 5).Update("d", 100000)

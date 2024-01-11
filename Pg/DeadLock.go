@@ -3,7 +3,6 @@ package pg
 import (
 	"Transaction/common"
 	"Transaction/model"
-	"database/sql"
 	"sync"
 	"time"
 
@@ -19,9 +18,7 @@ func PGDeadLock() {
 	go func() {
 		defer wg.Done()
 
-		tx := gormDB.Begin(&sql.TxOptions{
-			Isolation: sql.LevelRepeatableRead,
-		})
+		tx := gormDB.Begin()
 		defer tx.Commit()
 
 		common.PrintlnAllData(tx, "1")
@@ -36,9 +33,7 @@ func PGDeadLock() {
 
 		time.Sleep(2 * time.Second)
 
-		tx := gormDB.Begin(&sql.TxOptions{
-			Isolation: sql.LevelRepeatableRead,
-		})
+		tx := gormDB.Begin()
 		defer tx.Commit()
 
 		common.PrintlnAllData(tx, "2")
