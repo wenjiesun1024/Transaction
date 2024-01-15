@@ -9,9 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-/*
-current read: when we use insert、update、delete、select for update or select for share, we will use current read
-*/
 func PGCurrentReadAndSnapRead() {
 	gormDB := common.InitPG()
 
@@ -32,8 +29,10 @@ func PGCurrentReadAndSnapRead() {
 		// common.PrintlnAllData(tx, "3", clause.Locking{Strength: "SHARE"}) // abort
 		common.PrintlnAllData(tx, "3") // id=5, c=5, d=5
 
-		// 自动检测更新丢失 abort
-		tx.Model(&model.T{}).Where("id = ?", 5).UpdateColumn("d", gorm.Expr("d + ?", 10))
+		// 自动检测更新丢失
+		tx.Model(&model.T{}).Where("id = ?", 10).UpdateColumn("d", gorm.Expr("d + ?", 10)) // update id = 10, ok
+		tx.Model(&model.T{}).Where("id = ?", 6).UpdateColumn("d", gorm.Expr("d + ?", 10))  // update id = 6, ok
+		tx.Model(&model.T{}).Where("id = ?", 5).UpdateColumn("d", gorm.Expr("d + ?", 10))  // update id = 5, abort
 
 		common.PrintlnAllData(tx, "4")
 	}()

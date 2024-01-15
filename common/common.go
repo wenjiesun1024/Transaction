@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"sort"
 
 	"Transaction/model"
 
@@ -68,6 +69,9 @@ func InitPG() *gorm.DB {
 func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) {
 	var T []model.T
 	db.Clauses(Clauses...).Find(&T)
+	sort.Slice(T, func(i, j int) bool {
+		return T[i].ID < T[j].ID
+	})
 	fmt.Println(tag)
 	for _, i := range T {
 		fmt.Println(i)
