@@ -36,7 +36,7 @@ func MysqlCurrentReadAndSnapRead() {
 		// why? 另外一个更新操作把读过的行锁住了，所以这里会被阻塞。
 		tx.Model(&model.T{}).Where("id = ?", 5).UpdateColumn("d", gorm.Expr("d + ?", 10))
 
-		common.PrintlnAllData(tx, "4") // id=5, c=5, d=100010 (current read)
+		common.PrintlnAllData(tx, "4") // id=5, c=5, d=100010 (snap read)
 		/*
 			为什么 id=5现在可见最新数据，而 id=6还是旧数据呢？
 				https://juejin.cn/post/7134186501306318856
