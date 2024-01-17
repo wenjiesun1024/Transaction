@@ -31,8 +31,8 @@ func PGCurrentReadAndSnapRead() {
 
 		// 自动检测更新丢失
 		tx.Model(&model.T{}).Where("id = ?", 10).UpdateColumn("d", gorm.Expr("d + ?", 10)) // update id = 10, ok
-		tx.Model(&model.T{}).Where("id = ?", 6).UpdateColumn("d", gorm.Expr("d + ?", 10))  // update id = 6, ok
-		tx.Model(&model.T{}).Where("id = ?", 5).UpdateColumn("d", gorm.Expr("d + ?", 10))  // update id = 5, abort
+		tx.Model(&model.T{}).Where("id = ?", 6).UpdateColumn("d", gorm.Expr("d + ?", 10))  // update id = 6, ok, no data, no update
+		// tx.Model(&model.T{}).Where("id = ?", 5).UpdateColumn("d", gorm.Expr("d + ?", 10))  // update id = 5, abort
 
 		common.PrintlnAllData(tx, "4")
 	}()
