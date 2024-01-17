@@ -106,8 +106,8 @@ func MysqlLock3() {
 		tx := gormDB.Begin()
 		defer tx.Commit()
 
-		tx.Debug().Raw("select * from ts where id >= 10 and id < 11 for update").Scan(&model.T{}) // [10,15)
-		// tx.Debug().Raw("select * from ts where id = 10 for update").Scan(&model.T{}) // 10
+		tx.Debug().Raw("select * from ts where id >= 10 and id < 11 lock in share mode").Scan(&model.T{}) // [10,15)
+		// tx.Debug().Raw("select * from ts where id = 10 lock in share mode").Scan(&model.T{}) // 10
 		common.PrintlnAllData(tx, "1")
 
 		time.Sleep(6 * time.Second)
@@ -131,6 +131,7 @@ func MysqlLock3() {
 
 		// update d = d + 1 where id = 10
 		gormDB.Debug().Raw("update ts set d = d + 1 where id = 15").Scan(&model.T{}) // not block, mysql version >= 8.0.18
+		gormDB.Debug().Raw("update ts set d = d + 1 where c = 15").Scan(&model.T{})  // not block
 
 		common.PrintlnAllData(gormDB, "3")
 	}()
@@ -153,13 +154,12 @@ func MysqlLock4() {
 		tx := gormDB.Begin()
 		defer tx.Commit()
 
-		tx.Debug().Raw("select * from ts where c >= 10 and c < 11 lock in share mode").Scan(&model.T{}) // (5,15)
+		tx.Debug().Raw("select id from ts where c >= 10 and c < 11 lock in share mode").Scan(&model.T{}) // (5,15]
+		// 10 会回表， 15 不会回表
 
 		common.PrintlnAllData(tx, "1")
 
 		time.Sleep(6 * time.Second)
-
-		common.PrintlnAllData(tx, "1")
 	}()
 
 	go func() {
@@ -177,8 +177,9 @@ func MysqlLock4() {
 
 		time.Sleep(3 * time.Second)
 
-		// update d = d + 1 where id = 10
-		gormDB.Debug().Raw("update ts set d = d + 1 where id = 15").Scan(&model.T{}) // not block, mysql version >= 8.0.18
+		// update d = d + 1 where id = 15
+		gormDB.Debug().Raw("update ts set d = d + 1 where id = 15").Scan(&model.T{}) // not block
+		gormDB.Debug().Raw("update ts set d = d + 1 where c = 15").Scan(&model.T{})  // block
 
 		common.PrintlnAllData(gormDB, "3")
 	}()
@@ -207,8 +208,6 @@ func MysqlLock5() {
 		common.PrintlnAllData(tx, "1")
 
 		time.Sleep(6 * time.Second)
-
-		//common.PrintlnAllData(tx, "1")
 	}()
 
 	go func() {

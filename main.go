@@ -12,7 +12,7 @@ func main() {
 		// mysql.MysqlPhantomRead()
 		// mysql.MysqlCurrentReadAndSnapRead()
 		// mysql.MysqlDeadLock()
-		mysql.MysqlLock7()
+		mysql.MysqlLock4()
 	}
 	if false {
 		// pg.PGPhantomRead()
