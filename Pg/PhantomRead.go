@@ -25,6 +25,7 @@ func PGPhantomRead() {
 		time.Sleep(3 * time.Second)
 
 		common.PrintlnAllData(tx, "1")
+
 		tx.Model(&model.T{}).Where("1=1").Update("d", 100000)
 
 		common.PrintlnAllData(tx, "2")

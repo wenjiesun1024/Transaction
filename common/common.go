@@ -70,6 +70,9 @@ func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) {
 	var T []model.T
 	db.Clauses(Clauses...).Find(&T)
 	sort.Slice(T, func(i, j int) bool {
+		if T[i].ID == T[j].ID {
+			return T[i].C < T[j].C
+		}
 		return T[i].ID < T[j].ID
 	})
 	fmt.Println(tag)

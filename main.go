@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	{
+	if true {
 		// mysql.MysqlPhantomRead()
 		// mysql.MysqlCurrentReadAndSnapRead()
 		// mysql.MysqlDeadLock()
-		mysql.MysqlLock4()
+		mysql.MysqlLock7()
 	}
-	{
+	if false {
 		// pg.PGPhantomRead()
 		// pg.PGCurrentReadAndSnapRead()
 		// pg.PGDeadLock()
