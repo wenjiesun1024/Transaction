@@ -46,7 +46,7 @@ func PGCurrentReadAndSnapRead() {
 		defer tx.Commit()
 
 		tx.Model(&model.T{}).Where("id = ?", 5).Update("d", 100000)
-		tx.Model(&model.T{}).Create(&model.T{ID: 6, C: 6, D: 6})
+		tx.Model(&model.T{}).Create(&model.T{ID: 6, C: 6, D: 6, E: 6})
 		common.PrintlnAllData(tx, "2")
 	}()
 

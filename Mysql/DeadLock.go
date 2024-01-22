@@ -25,7 +25,7 @@ func MysqlDeadLock() {
 
 		tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", 3).First(&model.T{})
 		time.Sleep(3 * time.Second)
-		tx.Create(&model.T{ID: 3, C: 3, D: 3})
+		tx.Create(&model.T{ID: 3, C: 3, D: 3, E: 3})
 	}()
 
 	go func() {
@@ -44,7 +44,7 @@ func MysqlDeadLock() {
 
 		// 所以另外一个transaction 会被阻塞。同理，这个transaction 也会被阻塞直到另外一个transaction commit
 		// 这就导致了死锁
-		tx.Create(&model.T{ID: 4, C: 4, D: 4})
+		tx.Create(&model.T{ID: 4, C: 4, D: 4, E: 4})
 	}()
 
 	wg.Wait()

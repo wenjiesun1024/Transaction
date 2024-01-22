@@ -36,7 +36,7 @@ func PGPhantomRead() {
 
 		time.Sleep(2 * time.Second)
 
-		gormDB.Model(&model.T{}).Create(&model.T{ID: 6, C: 6, D: 6})
+		gormDB.Model(&model.T{}).Create(&model.T{ID: 6, C: 6, D: 6, E: 6})
 	}()
 
 	wg.Wait()

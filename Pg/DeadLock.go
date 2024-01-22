@@ -25,7 +25,7 @@ func PGDeadLock() {
 
 		tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", 3).First(&model.T{})
 		time.Sleep(3 * time.Second)
-		tx.Create(&model.T{ID: 3, C: 3, D: 3})
+		tx.Create(&model.T{ID: 3, C: 3, D: 3, E: 3})
 	}()
 
 	go func() {
@@ -40,7 +40,7 @@ func PGDeadLock() {
 
 		tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", 4).First(&model.T{})
 
-		tx.Create(&model.T{ID: 4, C: 4, D: 4})
+		tx.Create(&model.T{ID: 4, C: 4, D: 4, E: 4})
 	}()
 
 	wg.Wait()

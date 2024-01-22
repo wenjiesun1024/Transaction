@@ -27,12 +27,12 @@ func InitMysql() *gorm.DB {
 	gormDB.Unscoped().Where("1 = 1").Delete(&model.T{})
 
 	// insert data
-	gormDB.Create(&model.T{ID: 1, C: 1, D: 1})
-	gormDB.Create(&model.T{ID: 5, C: 5, D: 5})
-	gormDB.Create(&model.T{ID: 10, C: 10, D: 10})
-	gormDB.Create(&model.T{ID: 15, C: 15, D: 15})
-	gormDB.Create(&model.T{ID: 20, C: 20, D: 20})
-	gormDB.Create(&model.T{ID: 25, C: 25, D: 25})
+	gormDB.Create(&model.T{ID: 1, C: 1, D: 1, E: 1})
+	gormDB.Create(&model.T{ID: 5, C: 5, D: 5, E: 5})
+	gormDB.Create(&model.T{ID: 10, C: 10, D: 10, E: 10})
+	gormDB.Create(&model.T{ID: 15, C: 15, D: 15, E: 15})
+	gormDB.Create(&model.T{ID: 20, C: 20, D: 20, E: 20})
+	gormDB.Create(&model.T{ID: 25, C: 25, D: 25, E: 25})
 
 	return gormDB
 }
@@ -56,12 +56,12 @@ func InitPG() *gorm.DB {
 	// clear all data
 	gormDB.Unscoped().Where("1 = 1").Delete(&model.T{})
 	// insert data
-	gormDB.Create(&model.T{ID: 1, C: 1, D: 1})
-	gormDB.Create(&model.T{ID: 5, C: 5, D: 5})
-	gormDB.Create(&model.T{ID: 10, C: 10, D: 10})
-	gormDB.Create(&model.T{ID: 15, C: 15, D: 15})
-	gormDB.Create(&model.T{ID: 20, C: 20, D: 20})
-	gormDB.Create(&model.T{ID: 25, C: 25, D: 25})
+	gormDB.Create(&model.T{ID: 1, C: 1, D: 1, E: 1})
+	gormDB.Create(&model.T{ID: 5, C: 5, D: 5, E: 5})
+	gormDB.Create(&model.T{ID: 10, C: 10, D: 10, E: 10})
+	gormDB.Create(&model.T{ID: 15, C: 15, D: 15, E: 15})
+	gormDB.Create(&model.T{ID: 20, C: 20, D: 20, E: 20})
+	gormDB.Create(&model.T{ID: 25, C: 25, D: 25, E: 25})
 
 	return gormDB
 }
@@ -77,7 +77,7 @@ func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) {
 	})
 	fmt.Println(tag)
 	for _, i := range T {
-		fmt.Println(i)
+		fmt.Printf("%+v\n", i)
 	}
 	fmt.Println("------------------------")
 }

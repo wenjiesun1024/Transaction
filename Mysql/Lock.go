@@ -32,7 +32,7 @@ func MysqlLock() {
 		defer wg.Done()
 
 		time.Sleep(2 * time.Second)
-		gormDB.Create(&model.T{ID: 8, C: 8, D: 8}) // block
+		gormDB.Create(&model.T{ID: 8, C: 8, D: 8, E: 8}) // block
 		common.PrintlnAllData(gormDB, "2")
 
 	}()
@@ -84,7 +84,7 @@ func MysqlLock2() {
 		defer wg.Done()
 
 		time.Sleep(3 * time.Second)
-		gormDB.Debug().Create(&model.T{ID: 7, C: 7, D: 7}) // block
+		gormDB.Debug().Create(&model.T{ID: 7, C: 7, D: 7, E: 7}) // block
 		common.PrintlnAllData(gormDB, "3")
 	}()
 
@@ -117,8 +117,8 @@ func MysqlLock3() {
 		defer wg.Done()
 
 		time.Sleep(2 * time.Second)
-		gormDB.Debug().Create(&model.T{ID: 8, C: 8, D: 8})
-		gormDB.Debug().Create(&model.T{ID: 13, C: 13, D: 13})
+		gormDB.Debug().Create(&model.T{ID: 8, C: 8, D: 8, E: 8})
+		gormDB.Debug().Create(&model.T{ID: 13, C: 13, D: 13, E: 13})
 
 		common.PrintlnAllData(gormDB, "2")
 
@@ -129,9 +129,8 @@ func MysqlLock3() {
 
 		time.Sleep(3 * time.Second)
 
-		// update d = d + 1 where id = 10
+		// update d = d + 1 where id = 15
 		gormDB.Debug().Raw("update ts set d = d + 1 where id = 15").Scan(&model.T{}) // not block, mysql version >= 8.0.18
-		gormDB.Debug().Raw("update ts set d = d + 1 where c = 15").Scan(&model.T{})  // not block
 
 		common.PrintlnAllData(gormDB, "3")
 	}()
@@ -155,7 +154,6 @@ func MysqlLock4() {
 		defer tx.Commit()
 
 		tx.Debug().Raw("select id from ts where c >= 10 and c < 11 lock in share mode").Scan(&model.T{}) // (5,15]
-		// 10 会回表， 15 不会回表
 
 		common.PrintlnAllData(tx, "1")
 
@@ -166,7 +164,7 @@ func MysqlLock4() {
 		defer wg.Done()
 
 		time.Sleep(2 * time.Second)
-		gormDB.Debug().Create(&model.T{ID: 8, C: 8, D: 8})
+		gormDB.Debug().Create(&model.T{ID: 8, C: 8, D: 8, E: 8}) // block
 
 		common.PrintlnAllData(gormDB, "2")
 
@@ -178,7 +176,7 @@ func MysqlLock4() {
 		time.Sleep(3 * time.Second)
 
 		// update d = d + 1 where id = 15
-		gormDB.Debug().Raw("update ts set d = d + 1 where id = 15").Scan(&model.T{}) // not block
+		gormDB.Debug().Raw("update ts set d = d + 1 where id = 15").Scan(&model.T{}) // not block 加锁是在索引 c 上
 		gormDB.Debug().Raw("update ts set d = d + 1 where c = 15").Scan(&model.T{})  // block
 
 		common.PrintlnAllData(gormDB, "3")
@@ -192,7 +190,7 @@ func MysqlLock4() {
 // 非唯一索引存在等值情况
 func MysqlLock5() {
 	gormDB := common.InitMysql()
-	gormDB.Debug().Create(&model.T{ID: 30, C: 10, D: 30})
+	gormDB.Debug().Create(&model.T{ID: 30, C: 10, D: 30, E: 30})
 
 	wg := sync.WaitGroup{}
 	wg.Add(3)
@@ -214,7 +212,7 @@ func MysqlLock5() {
 		defer wg.Done()
 
 		time.Sleep(2 * time.Second)
-		gormDB.Debug().Create(&model.T{ID: 12, C: 12, D: 12})
+		gormDB.Debug().Create(&model.T{ID: 12, C: 12, D: 12, E: 12}) // block
 
 		common.PrintlnAllData(gormDB, "2")
 
@@ -257,7 +255,7 @@ func MysqlLock6() {
 		defer wg.Done()
 
 		time.Sleep(2 * time.Second)
-		gormDB.Debug().Create(&model.T{ID: 12, C: 12, D: 12})
+		gormDB.Debug().Create(&model.T{ID: 12, C: 12, D: 12, E: 12}) // not block
 
 		common.PrintlnAllData(gormDB, "2")
 
@@ -281,24 +279,103 @@ func MysqlLock7() {
 		tx := gormDB.Begin()
 		defer tx.Commit()
 
-		tx.Debug().Raw("select * from ts where c = 10 lock in share mode").Scan(&model.T{}) // (5, 15)
+		tx.Debug().Raw("select * from ts where c = 10 lock in share mode").Scan(&model.T{})
+		/*
+			1. 表的意向读锁
+			2. idx_ts_c (5, 5)到(10, 10)的next key lock
+			3, primary 10 行锁
+			4. idx_ts_c (10, 10)到(15, 15)的gap lock
+		*/
 
 		time.Sleep(3 * time.Second)
 
-		tx.Debug().Create(&model.T{ID: 8, C: 8, D: 8})
+		/*
+			1. 表的意向写锁 (session B)
+			2. idx_ts_c (5, 5)到(10, 10)的next key lock (session B)
+			3. 表的意向读锁 (session A)
+			4. idx_ts_c (5, 5)到(10, 10)的next key lock (session A)
+			5, primary 10 行锁 (session A)
+			6. idx_ts_c (10, 10)到(15, 15)的gap lock (session A)
+		*/
+
+		tx.Debug().Create(&model.T{ID: 8, C: 8, D: 8, E: 8}) // block
 	}()
 
 	go func() {
 		defer wg.Done()
 
 		time.Sleep(2 * time.Second)
-		gormDB.Debug().Raw("update ts set d = d + 1 where c = 10").Scan(&model.T{}) // block, 先（5，10）， 后 10
+		gormDB.Debug().Raw("update ts set d = d + 1 where c = 10").Scan(&model.T{}) // block
+		/*
+			1. 表的意向写锁
+			2. idx_ts_c (5, 5)到(10, 10)的next key lock
+			3. primary 10 行锁
+			4. idx_ts_c (10, 10)到(15, 15)的gap lock
+		*/
 
 		common.PrintlnAllData(gormDB, "2")
 
+		time.Sleep(2 * time.Second)
 	}()
 
 	wg.Wait()
 
 	common.PrintlnAllData(gormDB, "end")
 }
+
+// 普通字段
+func MysqlLock8() {
+	gormDB := common.InitMysql()
+	{
+		tx := gormDB.Begin()
+		defer tx.Commit()
+		tx.Debug().Raw("select * from ts where d = 10").Scan(&model.T{})
+		// 锁住了所有的行与间隙
+
+		time.Sleep(2 * time.Second)
+	}
+}
+
+// 主键范围查询2
+// func MysqlLock9() {
+// 	gormDB := common.InitMysql()
+
+// 	wg := sync.WaitGroup{}
+// 	wg.Add(3)
+
+// 	go func() {
+// 		defer wg.Done()
+
+// 		tx := gormDB.Begin()
+// 		defer tx.Commit()
+
+// 		tx.Debug().Raw("select * from ts where e > 10 and e <= 15 lock in share mode").Scan(&model.T{}) // (10,20] 而不是 (10,15]， 对于主键 id > 10 and id <= 15, 则是 (10,15]
+// 		common.PrintlnAllData(tx, "1")
+
+// 		time.Sleep(6 * time.Second)
+// 	}()
+
+// 	go func() {
+// 		defer wg.Done()
+
+// 		time.Sleep(2 * time.Second)
+// 		gormDB.Debug().Create(&model.T{ID: 16, C: 16, D: 16, E: 16}) // unblock
+
+// 		common.PrintlnAllData(gormDB, "2")
+// 	}()
+
+// 	go func() {
+// 		defer wg.Done()
+
+// 		time.Sleep(3 * time.Second)
+
+// 		// update d = d + 1 where id = 20
+// 		gormDB.Debug().Raw("update ts set d = d + 1 where id = 20").Scan(&model.T{}) // unblock
+
+// 		common.PrintlnAllData(gormDB, "3")
+// 	}()
+
+// 	wg.Wait()
+
+// 	common.PrintlnAllData(gormDB, "end")
+// }
