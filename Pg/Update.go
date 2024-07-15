@@ -9,7 +9,7 @@ import (
 
 // 自动检测更新
 func PGUpdate() {
-	gormDB := common.InitPG()
+	gormDB := common.InitPG(false)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)

@@ -9,7 +9,7 @@ import (
 )
 
 func PGPhantomRead() {
-	gormDB := common.InitPG()
+	gormDB := common.InitPG(false)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)

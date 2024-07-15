@@ -3,6 +3,8 @@ package common
 import (
 	"fmt"
 	"sort"
+	"sync"
+	"sync/atomic"
 
 	"Transaction/model"
 
@@ -37,7 +39,7 @@ func InitMysql() *gorm.DB {
 	return gormDB
 }
 
-func InitPG() *gorm.DB {
+func InitPG(EnableRR bool) *gorm.DB {
 	// use gorm to creat a table
 	gormDB, err := gorm.Open(postgres.Open("host=localhost user=root password=pass dbname=db port=5432 sslmode=disable"), &gorm.Config{})
 	if err != nil {
@@ -45,9 +47,11 @@ func InitPG() *gorm.DB {
 	}
 
 	// set transaction isolation level
-	err = gormDB.Exec("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ").Error
-	if err != nil {
-		panic(err)
+	if EnableRR {
+		err = gormDB.Exec("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ").Error
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// use gorm to create a table
@@ -80,4 +84,19 @@ func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) {
 		fmt.Printf("%+v\n", i)
 	}
 	fmt.Println("------------------------")
+}
+
+type MyCond struct {
+	*sync.Cond
+	Key int32
+}
+
+func WaitFor(cond *MyCond, expectedValue int32) {
+	cond.L.Lock()
+	for cond.Key != expectedValue {
+		cond.Wait()
+	}
+	atomic.AddInt32(&cond.Key, 1)
+	cond.L.Unlock()
+	cond.Broadcast()
 }

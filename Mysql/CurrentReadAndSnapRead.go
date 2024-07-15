@@ -4,9 +4,9 @@ import (
 	"Transaction/common"
 	"Transaction/model"
 	"sync"
-	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 /*
@@ -18,21 +18,32 @@ func MysqlCurrentReadAndSnapRead() {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
+	cond := &common.MyCond{
+		Key:  int32(1),
+		Cond: sync.NewCond(new(sync.Mutex)),
+	}
+
 	go func() {
 		defer wg.Done()
 
-		tx := gormDB.Begin()
+		tx := gormDB.Begin() // Transaction 1
 		defer tx.Commit()
 
 		common.PrintlnAllData(tx, "1")
+		common.WaitFor(cond, 1)
 
-		time.Sleep(3 * time.Second)
+		common.WaitFor(cond, 4)
 
-		// common.PrintlnAllData(tx, "3", clause.Locking{Strength: "UPDATE"}) // id=5,c=5,d=10000 (current read)
-		// common.PrintlnAllData(tx, "3", clause.Locking{Strength: "SHARE"}) // id=5,c=5,d=10000 (current read)
-		common.PrintlnAllData(tx, "3") // id=5, c=5, d=5 (snap read)
+		switch "Normal" {
+		case "Normal":
+			common.PrintlnAllData(tx, "3") // id=5, c=5, d=5 (snap read)
+		case "Update":
+			common.PrintlnAllData(tx, "3", clause.Locking{Strength: "UPDATE"}) // id=5,c=5,d=10000 (current read)
+		case "Share":
+			common.PrintlnAllData(tx, "3", clause.Locking{Strength: "SHARE"}) // id=5,c=5,d=10000 (current read)
+		}
 
-		// must wait transaction 1 commit
+		// must wait transaction 2 commit
 		// why? 另外一个更新操作把读过的行锁住了，所以这里会被阻塞。
 		tx.Model(&model.T{}).Where("id = ?", 5).UpdateColumn("d", gorm.Expr("d + ?", 10))
 
@@ -51,15 +62,15 @@ func MysqlCurrentReadAndSnapRead() {
 
 	go func() {
 		defer wg.Done()
-
-		time.Sleep(2 * time.Second)
-
-		tx := gormDB.Begin()
+		tx := gormDB.Begin() // Transaction 2
 		defer tx.Commit()
+		common.WaitFor(cond, 2)
 
 		tx.Model(&model.T{}).Where("id = ?", 5).Update("d", 100000)
 		tx.Model(&model.T{}).Create(&model.T{ID: 6, C: 6, D: 6})
 		common.PrintlnAllData(tx, "2")
+
+		common.WaitFor(cond, 3)
 	}()
 
 	wg.Wait()
