@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	MysqlTest := true
+	MysqlTest := false
+	EnablePGRR := true
 
 	if MysqlTest {
 		// mysql.MysqlCurrentReadAndSnapRead()
@@ -17,10 +18,9 @@ func main() {
 
 		// mysql.MysqlLock4()
 	} else {
-		pg.PGCurrentReadAndSnapRead()
-
-		// pg.PGPhantomRead()
-		// pg.PGDeadLock()
-		// pg.PGUpdate()
+		pg.PGCurrentReadAndSnapRead(EnablePGRR)
+		// pg.PGPhantomRead(EnablePGRR)
+		// pg.PGDeadLock(EnablePGRR)
+		// pg.PGUpdate(EnablePGRR)
 	}
 }

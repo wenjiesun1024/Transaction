@@ -3,7 +3,10 @@ package mysql
 import (
 	"Transaction/common"
 	"Transaction/model"
+	"fmt"
 	"sync"
+
+	"gorm.io/gorm"
 )
 
 func MysqlPhantomRead() {
@@ -20,18 +23,21 @@ func MysqlPhantomRead() {
 	go func() {
 		defer wg.Done()
 
-		tx := gormDB.Begin()
-		defer tx.Commit()
+		fmt.Println("Transaction 1 Err: ", gormDB.Transaction(func(tx *gorm.DB) error {
 
-		common.PrintlnAllData(tx, "1")
+			common.PrintlnAllData(tx, "1")
 
-		common.WaitFor(cond, 1)
+			common.WaitFor(cond, 1)
 
-		common.WaitFor(cond, 4)
+			common.WaitFor(cond, 4)
 
-		tx.Model(&model.T{}).Where("1=1").Update("d", 100000)
+			if err := tx.Model(&model.T{}).Where("1=1").Update("d", 100000).Error; err != nil {
+				return err
+			}
 
-		common.PrintlnAllData(tx, "2")
+			common.PrintlnAllData(tx, "2")
+			return nil
+		}))
 	}()
 
 	go func() {

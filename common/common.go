@@ -22,11 +22,11 @@ func InitMysql() *gorm.DB {
 		panic("failed to connect to database")
 	}
 
+	// drop table
+	gormDB.Migrator().DropTable(&model.T{})
+
 	// use gorm to create a table
 	gormDB.AutoMigrate(&model.T{})
-
-	// clear all data
-	gormDB.Unscoped().Where("1 = 1").Delete(&model.T{})
 
 	// insert data
 	gormDB.Create(&model.T{ID: 1, C: 1, D: 1, E: 1})
@@ -35,6 +35,8 @@ func InitMysql() *gorm.DB {
 	gormDB.Create(&model.T{ID: 15, C: 15, D: 15, E: 15})
 	gormDB.Create(&model.T{ID: 20, C: 20, D: 20, E: 20})
 	gormDB.Create(&model.T{ID: 25, C: 25, D: 25, E: 25})
+
+	PrintlnAllData(gormDB, "Init")
 
 	return gormDB
 }
@@ -54,11 +56,12 @@ func InitPG(EnableRR bool) *gorm.DB {
 		}
 	}
 
+	// drop table
+	gormDB.Migrator().DropTable(&model.T{})
+
 	// use gorm to create a table
 	gormDB.AutoMigrate(&model.T{})
 
-	// clear all data
-	gormDB.Unscoped().Where("1 = 1").Delete(&model.T{})
 	// insert data
 	gormDB.Create(&model.T{ID: 1, C: 1, D: 1, E: 1})
 	gormDB.Create(&model.T{ID: 5, C: 5, D: 5, E: 5})
@@ -67,12 +70,15 @@ func InitPG(EnableRR bool) *gorm.DB {
 	gormDB.Create(&model.T{ID: 20, C: 20, D: 20, E: 20})
 	gormDB.Create(&model.T{ID: 25, C: 25, D: 25, E: 25})
 
+	PrintlnAllData(gormDB, "Init")
 	return gormDB
 }
 
-func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) {
+func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) error {
 	var T []model.T
-	db.Clauses(Clauses...).Find(&T)
+	if err := db.Clauses(Clauses...).Find(&T).Error; err != nil {
+		return err
+	}
 	sort.Slice(T, func(i, j int) bool {
 		if T[i].ID == T[j].ID {
 			return T[i].C < T[j].C
@@ -84,6 +90,7 @@ func PrintlnAllData(db *gorm.DB, tag string, Clauses ...clause.Expression) {
 		fmt.Printf("%+v\n", i)
 	}
 	fmt.Println("------------------------")
+	return nil
 }
 
 type MyCond struct {

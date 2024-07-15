@@ -3,8 +3,10 @@ package mysql
 import (
 	"Transaction/common"
 	"Transaction/model"
+	"fmt"
 	"sync"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -22,37 +24,43 @@ func MysqlDeadLock() {
 	go func() {
 		defer wg.Done()
 
-		tx := gormDB.Begin() // Transaction 1
-		defer tx.Commit()
+		fmt.Println("Transaction 1 Err: ", gormDB.Transaction(func(tx *gorm.DB) error {
 
-		common.PrintlnAllData(tx, "1")
-		common.WaitFor(cond, 1)
+			common.PrintlnAllData(tx, "1")
+			common.WaitFor(cond, 1)
 
-		tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", 3).First(&model.T{})
+			tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", 999).First(&model.T{})
 
-		common.WaitFor(cond, 4)
+			common.WaitFor(cond, 4)
 
-		tx.Create(&model.T{ID: 3, C: 3, D: 3, E: 3})
+			if err := tx.Create(&model.T{ID: 998, C: 998, D: 998, E: 998}).Error; err != nil {
+				return err
+			}
+			return nil
+		}))
 	}()
 
 	go func() {
 		defer wg.Done()
-		tx := gormDB.Begin() // Transaction 2
-		defer tx.Commit()
+		fmt.Println("Transaction 2 Err: ", gormDB.Transaction(func(tx *gorm.DB) error {
 
-		common.WaitFor(cond, 2)
+			common.WaitFor(cond, 2)
 
-		common.PrintlnAllData(tx, "2")
+			common.PrintlnAllData(tx, "2")
 
-		// 在 RR 情况下， 因为 user_id 上有索引，由于间隙锁的原因，会有(1, 5)的间隙锁
-		// 注意间隙锁之间是相互不冲突的， 与它冲突的是 “往这个间隙里插入一个新行” 的操作
-		tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", 4).First(&model.T{})
+			// 在 RR 情况下， 因为 user_id 上有索引，由于间隙锁的原因，会有(25, +inf)的间隙锁
+			// 注意间隙锁之间是相互不冲突的， 与它冲突的是 “往这个间隙里插入一个新行” 的操作
+			tx.Model(&model.T{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", 1000).First(&model.T{})
 
-		common.WaitFor(cond, 3)
+			common.WaitFor(cond, 3)
 
-		// 所以另外一个transaction 会被阻塞。同理，这个transaction 也会被阻塞直到另外一个transaction commit
-		// 这就导致了死锁
-		tx.Create(&model.T{ID: 4, C: 4, D: 4, E: 4})
+			// 所以另外一个transaction 会被阻塞。同理，这个transaction 也会被阻塞直到另外一个transaction commit
+			// 这就导致了死锁
+			if err := tx.Create(&model.T{ID: 997, C: 997, D: 997, E: 997}).Error; err != nil {
+				return err
+			}
+			return nil
+		}))
 	}()
 
 	wg.Wait()

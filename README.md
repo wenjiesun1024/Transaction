@@ -3,7 +3,7 @@
   `docker compose up -d`
 
 # Mysql
-## CurrentReadAndSnapRead
+## MysqlCurrentReadAndSnapRead
     使用 For Update 和 Share 的读是当前读，而普通的读是快照读。
     更新操作也是当前读
 
@@ -17,3 +17,14 @@
     然后另外一个事务插入数据
     然后第一个事务更新所有数据，即使用当前读，读取到所有数据并提交
     然后再次读取数据，发现多了一些原本不存在的行，这就是幻读。
+
+
+# PostgreSQL
+## PGCurrentReadAndSnapRead
+    test 还有问题，必须每次手动清理 drop table t 才能得到符合预期的结果
+
+## PGDeadLock
+    没有间隙锁
+
+## PGPhantomRead
+   在 RR 模式，没有幻读
